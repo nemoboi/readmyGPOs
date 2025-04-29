@@ -9,22 +9,23 @@
 . "$PSScriptRoot\functions\help.ps1"
 
 function Show-Menu {
-    Clear-Host
+    # Clear-Host
     Write-Host "====================="
     Write-Host "   readmyGPOs Menu   "
     Write-Host "====================="
     Write-Host ""
-    Write-Host "1. Count GPOs"
-    Write-Host "2. Search GPOs"
-    Write-Host "3. Help"
-    Write-Host "4. Exit"
+    Write-Host "1 - Count GPOs"
+    Write-Host "2 - Search GPOs"
+    Write-Host "3 - Help"
+    Write-Host "4 - Exit"
+    Write-Host "5 - Clear"
     Write-Host ""
 }
 
 function Run-CLI {
     do {
         Show-Menu
-        $choice = Read-Host "Enter your choice (1-4)"
+        $choice = Read-Host "Enter your choice (1-5)"
 
         switch ($choice) {
             "1" {
@@ -47,6 +48,9 @@ function Run-CLI {
             }
             "4" {
                 Write-Host "`nExiting ..."
+            }
+            "5" {
+                Clear-Host
             }
             default {
                 Write-Host "`nInvalid selection. Please try again.`n"
