@@ -2,8 +2,8 @@
 
 #   give count of
 #     - all available GPOs
-#     - all GPOs in use (linked to OU)
-#     - all GPOs in active use (linked to OU and link Enabled)
+#     - all GPOs in use (linked to domain/OU/sites)
+#     - all GPOs in active use (linked and link Enabled)
 
 
 # site level GPOs cause GPInheritance is a bitch and doesn't like sites
@@ -18,7 +18,7 @@ function GetSiteLevel
             $site.gPLink -split '\[LDAP://' | ForEach-Object {
                 if ($_ -match '^CN={(.*?)}.*;([01])\]') {
                     $gpoGuid = $matches[1]
-                    $enabled = [int]$matches[2]
+                    $enabled = [bool]$matches[2]
                     $gpo = Get-GPO -Guid $gpoGuid -ErrorAction SilentlyContinue
                     if ($gpo) {
                         $siteGPOlinks += [PSCustomObject]@{
@@ -52,34 +52,33 @@ function Analysis
     # domain level
     $domain = ([ADSI]"LDAP://RootDSE").defaultNamingContext[0]
     $domainlinkedGPOs = (Get-GPInheritance -Target $domain).GpoLinks
-    $domainlinkedGPOsACTIVE = $domainlinkedGPOs | Where-Object {$_.Enabled -ne "None"}
+    $domainlinkedGPOsACTIVE = $domainlinkedGPOs | Where-Object {$_.Enabled -eq "True"}
 
     # OU level
     $ouGPOlinks = @()
     $oulinkedGPOs = @()
     Get-ADOrganizationalUnit -Filter * | ForEach-Object {
         $ouGPOlinks += (Get-GPInheritance -Target $_.DistinguishedName).GpoLinks }
-    $oulinkedGPOs = $ouGPOlinks | Where-Object { $_.DisplayName -ne $null }
-    $oulinkedGPOs = $oulinkedGPOs | Sort-Object -Property Guid, @{Expression = {$_."Enabled" -eq "None"}; Descending=$true} -Unique
-    $oulinkedGPOsACTIVE = $oulinkedGPOs | Where-Object {$_.Enabled -ne "None"}
+    $ouGPOlinks = $ouGPOlinks | Where-Object { $_.DisplayName -ne $null } 
+    $oulinkedGPOs = $ouGPOlinks | Select-Object -Property DisplayName, Enabled -Unique
+    $oulinkedGPOsACTIVE = $oulinkedGPOs | Where-Object {$_.Enabled -eq "True"}
+    $oulinkedGPOs = $ouGPOlinks | Sort-Object -Property DisplayName -Unique
 
     # site level
-    #$siteGPOlinks = @()
     $sitelinkedGPOs = @()
-    #Get-ADReplicationSite -Filter * | ForEach-Object {
-    #    $siteGPOlinks += Get-GPLink -Target ("CN=" + $_.Name + ",CN=Sites,CN=Configuration," + ([ADSI]"LDAP://RootDSE").configurationNamingContext) }
     $siteGPOlinks = GetSiteLevel
-    #$sitelinkedGPOsACTIVE = $sitelinkedGPOs | Where-Object {$_.Enabled == 1}
-
+    
     # total
     $allGPOsCount = (Get-ADObject -Filter { objectClass -eq "groupPolicyContainer" } -SearchBase "CN=Policies,CN=System,$((Get-ADDomain).DistinguishedName)").Count
     $alllinkedGPOs = @()
+    # add all the others
     $alllinkedGPOs += $domainlinkedGPOs
     $alllinkedGPOs += $oulinkedGPOs
     $alllinkedGPOs += $sitelinkedGPOs
-    $alllinkedGPOs = $alllinkedGPOs | Where-Object { $_.DisplayName -ne $null } 
-    $alllinkedGPOs = $alllinkedGPOs | Sort-Object -Property Guid, @{Expression = {$_."Enabled" -eq "None"}; Descending=$true} -Unique
-    $alllinkedGPOsACTIVE = $alllinkedGPOs | Where-Object {$_.Enabled -ne "None"}
+    # filter out duplicates
+    $alllinkedGPOs = $alllinkedGPOs | Select-Object -Property DisplayName, Enabled -Unique
+    $alllinkedGPOsACTIVE = $alllinkedGPOs | Where-Object {$_.Enabled -eq "True"}
+    $alllinkedGPOs = $alllinkedGPOs | Sort-Object -Property DisplayName -Unique
 
 
     # output print
@@ -104,6 +103,7 @@ function Analysis
     Write-Output "Site-level linked GPOs: $($sitelinkedGPOs.Count)"
     Write-Output "Site-level linked GPOs with Enabled links: $($sitelinkedGPOsACTIVE.Count)"
 
+    
     }
 
-Analysis
+
