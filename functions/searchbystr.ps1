@@ -5,18 +5,17 @@
 # building the gpostruct for the list
 
 class GPOstruct {
-    [string]$name
-    [int]$titlecount = 0
-    [int]$bodycount = 0
-    [double]$value 
-    static [int]$id
+    [string]$Name
+    [int]$Titlecount = 0
+    [int]$Bodycount = 0
+    [double]$Value = 0
 
-    GPOstruct([string]$Name) { $this.Init(@{name = $Name}) }
+    GPOstruct([string]$name) { $this.Init(@{Name = $name}) }
 
     [string] print() 
     {
         $str = $this.name
-        $str += ", Mentions in title: " + [string]([bool]$this.titlecount)
+        $str += ", Titlecount: " + [string]([bool]$this.titlecount)
         $str += ", Value:" + $this.value
 
         return $str
@@ -26,7 +25,8 @@ class GPOstruct {
 function SearchByStr
 {
     # prep
-
+    #####################################
+    
     # attributes
     $gpoList = @()
     $prioritymult = 1
@@ -35,8 +35,8 @@ function SearchByStr
     # 20 questions
     $filterstr = Read-Host "`nPlease enter the intended filter string: "
 
-    $multimentions = Read-Host "`nDo you want to prioritise multiple mentions of $($filterstr) in one GPO? [y/n] "
     do {
+        $multimentions = Read-Host "`nDo you want to prioritise multiple mentions of $($filterstr) in one GPO? [y/n] "
         switch ($multimentions) {
             "y" {
                     $multimentions = [bool]1
@@ -48,7 +48,6 @@ function SearchByStr
                     Write-Host "Your output will not be sorted by number of mentions.`n"
                     $valid = $true
                 }
-
             default {
                     Write-Host "`nInvalid input. Please use 'y' for yes or 'n' for no.`n"
                 }
@@ -56,8 +55,8 @@ function SearchByStr
     } until ($valid)
     $valid = $false
 
-    $titleprio = Read-Host "`nDo you want to prioritise mentions of $($filterstr) in the GPO title? [y/n] "
     do {
+        $titleprio = Read-Host "`nDo you want to prioritise mentions of $($filterstr) in the GPO title? [y/n] "
         switch ($titleprio) {
             "y" {
                     $prioritymult =  
@@ -95,20 +94,35 @@ function SearchByStr
 
 
     # main point of this whole thing
+    #####################################
     
     # search through all GPOs
     for ($i=0; $i -lt $allGPOs.Length; $i++)
     {
+        Start-Sleep -Milliseconds 20
         # show progress
         Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
-        
-        $iterator = $allGPOs[$i]
-        $title = $iterator.DisplayName
 
-        while ($Name -match $filterstr) {
-            $titlecount++
+        $iteratorid = $allGPOs[$i].Name
+        $iterator = Get-GPO -Guid $iteratorid
+        $title = $iterator.DisplayName
+        Write-Host "$($title)"
+        $titlecount = 0
+
+        # title search first
+        while ($name -match $filterstr) {
             $title = $title.Substring($title.IndexOf($filterstr) + $filterstr.Length)
+            $titlecount ++
+            Write-Host "$($titlecount)"
         }
 
+        # check if body search is necessary
+        if ($multimentions -or ($titlecount -eq 0))
+        {
+            # get xml
+            # $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
+            # body search
+        }
+        
     }
 }
