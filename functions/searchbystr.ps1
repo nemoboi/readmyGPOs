@@ -99,30 +99,33 @@ function SearchByStr
     # search through all GPOs
     for ($i=0; $i -lt $allGPOs.Length; $i++)
     {
-        Start-Sleep -Milliseconds 20
-        # show progress
-        Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
-
         $iteratorid = $allGPOs[$i].Name
         $iterator = Get-GPO -Guid $iteratorid
         $title = $iterator.DisplayName
-        Write-Host "$($title)"
+        Write-Host "GPO: $($title)"
         $titlecount = 0
 
         # title search first
         while ($name -match $filterstr) {
             $title = $title.Substring($title.IndexOf($filterstr) + $filterstr.Length)
             $titlecount ++
-            Write-Host "$($titlecount)"
+            Write-Host "Titlecount: $($titlecount)"
         }
 
         # check if body search is necessary
         if ($multimentions -or ($titlecount -eq 0))
         {
             # get xml
-            # $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
+            $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
+            
             # body search
+            $bodycount = ($data -split [regex]::Escape($filterstr)).Count - 1
+            Write-Host "Bodycount: $($bodycount)"
+
         }
+        
+        # show progress
+        Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
         
     }
 }
