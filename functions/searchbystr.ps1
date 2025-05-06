@@ -10,14 +10,19 @@ class GPOstruct {
     [int]$Bodycount = 0
     [double]$Value = 0
 
-    GPOstruct([string]$name) { $this.Init(@{Name = $name}) }
+    GPOstruct([string] $name, [int] $titlecount, [int] $bodycount, [double] $value) { 
+        $this.Name = $name
+        $this.Titlecount = $titlecount
+        $this.Bodycount = $bodycount
+        $this.Value = $value
+    }
 
     [string] print() 
     {
         $str = $this.name
-        $str += ", Titlecount: " + [string]([bool]$this.titlecount)
-        $str += ", Value:" + $this.value
-
+        $str += ", Titlesearch: " + [string]$this.titlecount + "hits"
+        $str += ", Bodysearch: " + [string]$this.bodycount + "hits"
+        
         return $str
     }
 }
@@ -27,10 +32,8 @@ function SearchByStr
     # prep
     #####################################
     
-    # attributes
-    $gpoList = @()
-    $prioritymult = 1
     $valid = $false  # we need this for the switch rounds
+    $prioritymult = 1 # default multiplicator for titlecount
     
     # 20 questions
     $filterstr = Read-Host "`nPlease enter the intended filter string: "
@@ -39,12 +42,12 @@ function SearchByStr
         $multimentions = Read-Host "`nDo you want to prioritise multiple mentions of $($filterstr) in one GPO? [y/n] "
         switch ($multimentions) {
             "y" {
-                    $multimentions = [bool]1
+                    $multimentions = 1
                     Write-Host "Your output will be sorted by number of mentions.`n"
                     $valid = $true
                 }
             "n" {
-                    $multimentions = [bool]0
+                    $multimentions = 0
                     Write-Host "Your output will not be sorted by number of mentions.`n"
                     $valid = $true
                 }
@@ -61,7 +64,7 @@ function SearchByStr
             "y" {
                     $prioritymult =  
                         Read-Host "Please give athe factor of priority (e.g. if a mention of $($filterstr) is twice
-                        as important as a mention in the body, use '2'): "
+as important as a mention in the body, use '2'): "
                     try {
                         [double]$prioritymult = $prioritymult
                         $valid = $true
@@ -87,7 +90,7 @@ function SearchByStr
 
     # get a list of all GPOs
     $allGPOs = Get-ADObject -Filter { objectClass -eq "groupPolicyContainer" } -SearchBase "CN=Policies,CN=System,$((Get-ADDomain).DistinguishedName)"
-    # might need this
+    # might need this, might not
     # $allGPOs = $allGPOs | Sort-Object -Property DisplayName -Unique
 
     Write-Host "Searching through $($allGPOs.Count) GPOs"
@@ -95,37 +98,56 @@ function SearchByStr
 
     # main point of this whole thing
     #####################################
+
+    $filteredGPOs = @()
     
     # search through all GPOs
     for ($i=0; $i -lt $allGPOs.Length; $i++)
     {
+        # show progress
+        Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
+        
         $iteratorid = $allGPOs[$i].Name
         $iterator = Get-GPO -Guid $iteratorid
         $title = $iterator.DisplayName
-        Write-Host "GPO: $($title)"
+        Write-Debug "GPO: $($title)"
+        
         $titlecount = 0
+        $bodycount = 0
 
         # title search first
-        while ($name -match $filterstr) {
-            $title = $title.Substring($title.IndexOf($filterstr) + $filterstr.Length)
-            $titlecount ++
-            Write-Host "Titlecount: $($titlecount)"
-        }
+        $titlecount = ($title -split [regex]::Escape($filterstr)).Count - 1
+        Write-Debug "Titlecount: $($titlecount)"
+        try { $check = $titlecount -ge 0 }
+        catch { "GPO title empty." }
 
         # check if body search is necessary
         if ($multimentions -or ($titlecount -eq 0))
         {
+        # body search
             # get xml
             $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
             
-            # body search
-            $bodycount = ($data -split [regex]::Escape($filterstr)).Count - 1
-            Write-Host "Bodycount: $($bodycount)"
+            # search
+            $bodycount = ($dataxml -split [regex]::Escape($filterstr)).Count - 1
+            Write-Debug "Bodycount: $($bodycount)"
 
         }
         
-        # show progress
-        Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
-        
+        # check if GPO is interesting
+        if (($titlecount + $bodycount) -gt 0)
+        {
+            # generate object
+            $temp = [GPOstruct]::new($title, $titlecount, $bodycount, ($multimentions * ($titlecount * $prioritymult + $bodycount)))
+            # add object to list
+            $filteredGPOs += $temp
+        }
+    }
+
+    # sort list
+    $filteredGPOs | Sort-Object -Property Value
+    for ($i=0; $i -lt $filteredGPOs.Length; $i++)
+    {
+        $filteredGPOs[$i].print()
     }
 }
