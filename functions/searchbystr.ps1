@@ -27,6 +27,15 @@ class GPOstruct {
     }
 }
 
+function SaveToFile
+{
+    Param (
+        [string] $path,
+        [GPOstruct[]] $gpos
+        )
+
+}
+
 function SearchByStr
 {
     # prep
@@ -146,8 +155,51 @@ as important as a mention in the body, use '2'): "
 
     # sort list
     $filteredGPOs | Sort-Object -Property Value
+    # output
     for ($i=0; $i -lt $filteredGPOs.Length; $i++)
     {
         $filteredGPOs[$i].print()
+    }
+
+    # options for saving to file
+    do {
+        $savetofile = Read-Host "`n`nDo you want to save this list to a file? [y/n] "
+        switch ($savetofile) {
+            "y" {
+                    $savetofile = 1
+                    $valid = $true
+                }
+            "n" {
+                    $savetofile = 0
+                    $valid = $true
+                }
+            default {
+                    Write-Host "`nInvalid input. Please use 'y' for yes or 'n' for no.`n"
+                }
+        }
+    } until ($valid)
+    $valid = $false
+
+    if ($savetofile -eq 1)
+    {
+        # generate a file name
+        $date = Get-Date -Format "yyyyMMdd"
+        $filename = "gpos-search-" + $filterstr + $date + ".txt"
+
+        # get path
+        do {
+            Write-Host "`nPlease enter the path to the directory you wish to save the file in. "
+            $path = Read-Host "If you leave the path empty, the file will be saved in your current directory: "
+            if ($path -eq "") { $path = "." }
+
+            # make sure path is valid
+            if (Test-Path -Path $path) { $valid = $true }
+            if-else (Test-Path -Path ($path+"/"+$filename)) { Write-Host "`nInvalid input. $($filename) already exists in that folder.n" }
+            else { Write-Host "`nInvalid input. Please choose an existing directory.`n" }
+        } until ($valid)
+        $valid = $false
+
+        # make a file
+        New-Item -Path $path -Name $filename -ItemType "File" 
     }
 }
