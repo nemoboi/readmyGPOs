@@ -146,15 +146,17 @@ as important as a mention in the body, use '2'): "
         # check if GPO is interesting
         if (($titlecount + $bodycount) -gt 0)
         {
+            # calc value
+            $value = $titlecount * $prioritymult + $bodycount * $multimentions
             # generate object
-            $temp = [GPOstruct]::new($title, $titlecount, $bodycount, ($multimentions * ($titlecount * $prioritymult + $bodycount)))
+            $temp = [GPOstruct]::new($title, $titlecount, $bodycount, $value)
             # add object to list
             $filteredGPOs += $temp
         }
     }
 
     # sort list
-    $filteredGPOs | Sort-Object -Property Value
+    $filteredGPOs | Sort-Object -Property Value -Descending
     # output
     for ($i=0; $i -lt $filteredGPOs.Length; $i++)
     {
@@ -191,15 +193,16 @@ as important as a mention in the body, use '2'): "
             Write-Host "`nPlease enter the path to the directory you wish to save the file in. "
             $path = Read-Host "If you leave the path empty, the file will be saved in your current directory: "
             if ($path -eq "") { $path = "." }
+            $filepath = $path+"/"+$filename
 
             # make sure path is valid
             if (Test-Path -Path $path) { $valid = $true }
-            if-else (Test-Path -Path ($path+"/"+$filename)) { Write-Host "`nInvalid input. $($filename) already exists in that folder.n" }
+            elseif (Test-Path -Path $filepath) { Write-Host "`nInvalid input. $($filename) already exists in that folder.n" }
             else { Write-Host "`nInvalid input. Please choose an existing directory.`n" }
         } until ($valid)
         $valid = $false
 
-        # make a file
-        New-Item -Path $path -Name $filename -ItemType "File" 
+        # write $filteredGPOs into file 
+        $filteredGPOs | Out-File -FilePath $filepath -Force | Out-Null
     }
 }
