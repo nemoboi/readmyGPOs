@@ -4,6 +4,5 @@ siehe Plan
 
 ### NICE TO HAVE:
 - Platz/Zeitoptimierung Analyse 
-	eigentlich sollte die Liste mit Namen umgehbar sein
-	da könnten nur duplicates dann ein problem werden
+	- Im Fall von multimentions == False, titlecount == 0: Die vollständige bodysearch ist da eigentlich nicht notwendig, sondern immer nur bis zum ersten mention. not entirely sure ob das sinnvolle Mengen an Zeit spart, aber possible
 - SbS punkte für gelinkte gpos?

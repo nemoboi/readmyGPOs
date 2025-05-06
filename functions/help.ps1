@@ -4,7 +4,7 @@
 #   be concise about it
 
 
-function Help
+function HelpMe
 {
     Write-Host "===== HELP MENU =====" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host "This tool provides a set of utilities for GPO analysis and searching.`n"
@@ -18,7 +18,11 @@ function Help
     Write-Host "   Note: Requires the GroupPolicy module and Active Directory access.`n"
 
     Write-Host "2. Search Menu" -BackgroundColor DarkGreen -ForegroundColor White
-    Write-Host "   tbd`n"
+    Write-Host "   Scans all GPOs in Active Directory for a user-specified string."
+    Write-Host "   You can choose to prioritize multiple mentions and give different weight to matches in"
+    Write-Host "   GPO titles."
+    Write-Host "   Each GPO is scored based on the number of matches and sorted accordingly."
+    Write-Host "   Results are displayed and can optionally be saved to a .txt file.`n"
 
     Write-Host "3. Help" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host "   Displays this help menu with descriptions of each option.`n"
