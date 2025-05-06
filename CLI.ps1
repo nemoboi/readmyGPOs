@@ -43,7 +43,7 @@ function Run-CLI {
             "3" {
                 Write-Host "`n Need some help?`n"
                 Write-Host ""
-                Help
+                HelpMe
                 Pause
             }
             "4" {

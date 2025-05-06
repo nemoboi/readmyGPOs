@@ -21,7 +21,8 @@ class GPOstruct {
     {
         $str = $this.name
         $str += ", Titlesearch: " + [string]$this.titlecount + "hits"
-        $str += ", Bodysearch: " + [string]$this.bodycount + "hits"
+        #we'll leave off bodysearch cause it's weird when multimentions is disabled
+        #$str += ", Bodysearch: " + [string]$this.bodycount + "hits"
         
         return $str
     }
@@ -117,6 +118,10 @@ as important as a mention in the body, use '2'): "
         Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
         
         $iteratorid = $allGPOs[$i].Name
+        # patching for the 3 annoying gpos
+        if ($iteratorid -match "`n") {
+            $iteratorid = $iteratorid -split "`r?`n", 2 | Select-Object -First 1
+        }
         $iterator = Get-GPO -Guid $iteratorid
         $title = $iterator.DisplayName
         Write-Debug "GPO: $($title)"
@@ -186,7 +191,7 @@ as important as a mention in the body, use '2'): "
     {
         # generate a file name
         $date = Get-Date -Format "yyyyMMdd"
-        $filename = "gpos-search-" + $filterstr + $date + ".txt"
+        $filename = "gpos-search-" + $filterstr + "-" + $date + ".txt"
 
         # get path
         do {
@@ -196,13 +201,14 @@ as important as a mention in the body, use '2'): "
             $filepath = $path+"/"+$filename
 
             # make sure path is valid
-            if (Test-Path -Path $path) { $valid = $true }
-            elseif (Test-Path -Path $filepath) { Write-Host "`nInvalid input. $($filename) already exists in that folder.n" }
+            if (Test-Path -Path $filepath) { Write-Host "`nInvalid input. $($filename) already exists in that folder.`n" }
+            elseif (Test-Path -Path $path) { $valid = $true }
             else { Write-Host "`nInvalid input. Please choose an existing directory.`n" }
         } until ($valid)
         $valid = $false
 
         # write $filteredGPOs into file 
-        $filteredGPOs | Out-File -FilePath $filepath -Force | Out-Null
+        $filteredGPOs | Out-File -FilePath $filepath *>$null 
+
     }
 }
