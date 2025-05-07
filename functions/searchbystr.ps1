@@ -2,8 +2,10 @@
 
 #   idfk give me some time to figure shit out
 
-# building the gpostruct for the list
 
+. "$PSScriptRoot\CLI.ps1"
+
+# building the gpostruct for the list
 class GPOstruct {
     [string]$Name
     [int]$Titlecount = 0
@@ -21,20 +23,13 @@ class GPOstruct {
     {
         $str = $this.name
         $str += ", Titlesearch: " + [string]$this.titlecount + "hits"
-        #we'll leave off bodysearch cause it's weird when multimentions is disabled
+        #will leave off bodysearch cause it is weird when multimentions is disabled
         #$str += ", Bodysearch: " + [string]$this.bodycount + "hits"
         
         return $str
     }
-}
-
-function SaveToFile
-{
-    Param (
-        [string] $path,
-        [GPOstruct[]] $gpos
-        )
-
+    
+    
 }
 
 function SearchByStr
@@ -103,6 +98,7 @@ as important as a mention in the body, use '2'): "
     # might need this, might not
     # $allGPOs = $allGPOs | Sort-Object -Property DisplayName -Unique
 
+    Write-Host "Today's GPOs are proudly presented to you by $((Get-ADDomainController -Discover).HostName)"
     Write-Host "Searching through $($allGPOs.Count) GPOs"
 
 
@@ -152,12 +148,14 @@ as important as a mention in the body, use '2'): "
         if (($titlecount + $bodycount) -gt 0)
         {
             # calc value
-            $value = $titlecount * $prioritymult + $bodycount * $multimentions
+            $value = 0
+            if ($multimentions) { $value = $titlecount * $titleprio + $bodycount }
             # generate object
             $temp = [GPOstruct]::new($title, $titlecount, $bodycount, $value)
             # add object to list
             $filteredGPOs += $temp
         }
+        
     }
 
     # sort list
@@ -208,7 +206,8 @@ as important as a mention in the body, use '2'): "
         $valid = $false
 
         # write $filteredGPOs into file 
-        $filteredGPOs | Out-File -FilePath $filepath *>$null 
+        $filteredGPOs | Out-File -FilePath $filepath 
 
     }
+    Run-CLI
 }

@@ -4,7 +4,7 @@
 #   be concise about it
 
 
-function HelpMe
+function Help-Me
 {
     Write-Host "===== HELP MENU =====" -BackgroundColor DarkGreen -ForegroundColor White
     Write-Host "This tool provides a set of utilities for GPO analysis and searching.`n"

@@ -4,9 +4,9 @@
 #   - navigate options into other functions analysis, searchbystring, help
 #   - implement exit function
 
-. "$PSScriptRoot\functions\analysis.ps1"
-. "$PSScriptRoot\functions\searchbystr.ps1"
-. "$PSScriptRoot\functions\help.ps1"
+. "$PSScriptRoot\analysis.ps1"
+. "$PSScriptRoot\searchbystr.ps1"
+. "$PSScriptRoot\help.ps1"
 
 function Show-Menu {
     # Clear-Host
@@ -43,7 +43,7 @@ function Run-CLI {
             "3" {
                 Write-Host "`n Need some help?`n"
                 Write-Host ""
-                HelpMe
+                Help-Me
                 Pause
             }
             "4" {
