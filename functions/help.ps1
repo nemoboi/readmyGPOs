@@ -3,6 +3,8 @@
 #   explain all CLI options 
 #   be concise about it
 
+. "$PSScriptRoot\CLI.ps1"
+
 
 function Help-Me
 {
@@ -34,4 +36,6 @@ function Help-Me
     Write-Host "   Clears the console display for better readability.`n"
 
     Write-Host ""
+
+    Run-CLI
 }

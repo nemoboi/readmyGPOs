@@ -5,6 +5,8 @@
 #     - all GPOs in use (linked to domain/OU/sites)
 #     - all GPOs in active use (linked and link Enabled)
 
+. "$PSScriptRoot\CLI.ps1"
+
 
 # site level GPOs cause GPInheritance is a bitch and doesn't like sites
 function GetSiteLevel
@@ -103,6 +105,7 @@ function Analysis
     Write-Output "Site-level linked GPOs: $($sitelinkedGPOs.Count)"
     Write-Output "Site-level linked GPOs with Enabled links: $($sitelinkedGPOsACTIVE.Count)"
 
+    Run-CLI
     
     }
 
