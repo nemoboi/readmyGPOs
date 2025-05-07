@@ -1,4 +1,4 @@
-﻿## HELP FUNCTION
+﻿##  HELP FUNCTION
 
 #   explain all CLI options 
 #   be concise about it

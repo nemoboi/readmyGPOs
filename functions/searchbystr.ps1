@@ -1,7 +1,11 @@
-## SEARCHBYSTR FUNCTION
+##  SEARCHBYSTR FUNCTION
 
-#   idfk give me some time to figure shit out
-
+#   Get all available GPOs
+#   Find given filterstr in title -> body
+#   - optional weighted results by # of mentions
+#   - optional weight multiplier for title hits
+# if multimentions is disabled it might be a lot easier to find n mentions in title and
+# for n==0 only find the /first/ mention in body... 
 
 . "$PSScriptRoot\CLI.ps1"
 

@@ -41,7 +41,7 @@ function Run-CLI {
                 Pause
             }
             "3" {
-                Write-Host "`n Need some help?`n"
+                Write-Host "`nNeed some help?`n"
                 Write-Host ""
                 Help-Me
                 Pause
