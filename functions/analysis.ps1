@@ -86,6 +86,9 @@ function Analysis
     # output print
     Write-Output "===== GPO use ====="
     
+    Write-Host "Today's GPOs are proudly presented to you by $((Get-ADDomainController -Discover).HostName)"
+    Write-Host "Searching through $($allGPOs.Count) GPOs"
+
     Write-Output ""
     Write-Output "Total GPOs: $($allGPOsCount)"
     Write-Output "Total linked GPOs: $($alllinkedGPOs.Count)"
