@@ -7,7 +7,7 @@
 # if multimentions is disabled it might be a lot easier to find n mentions in title and
 # for n==0 only find the /first/ mention in body... 
 
-. "$PSScriptRoot\CLI.ps1"
+. "$PSScriptRoot\readmyGPOs.ps1"
 
 # building the gpostruct for the list
 class GPOstruct {
@@ -23,13 +23,14 @@ class GPOstruct {
         $this.Value = $value
     }
 
-    [string] print() 
+    [string] print([bool]$mult) 
     {
         $str = $this.name
-        $str += ", Titlesearch: " + [string]$this.titlecount + "hits"
-        #will leave off bodysearch cause it is weird when multimentions is disabled
-        #$str += ", Bodysearch: " + [string]$this.bodycount + "hits"
-        
+        if ($mult) {
+            $str += ", Titlesearch: " + [string]$this.titlecount + "hits"
+            $str += ", Bodysearch: " + [string]$this.bodycount + "hits"
+        }
+        Write-Host "$($str)"
         return $str
     }
     
@@ -118,7 +119,7 @@ as important as a mention in the body, use '2'): "
         Write-Progress -Activity "Reading GPOs ..." -PercentComplete ($i / $allGPOs.Length * 100)
         
         $iteratorid = $allGPOs[$i].Name
-        # patching for the 3 annoying gpos
+        # patching for empty gpos part 1
         if ($iteratorid -match "`n") {
             $iteratorid = $iteratorid -split "`r?`n", 2 | Select-Object -First 1
         }
@@ -138,13 +139,18 @@ as important as a mention in the body, use '2'): "
         # check if body search is necessary
         if ($multimentions -or ($titlecount -eq 0))
         {
+            # patch for empty gpos part 2
+            try {
         # body search
-            # get xml
-            $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
+                # get xml
+                $dataxml = Get-GPOReport -GUID $iterator.Id -ReportType Xml
             
-            # search
-            $bodycount = ($dataxml -split [regex]::Escape($filterstr)).Count - 1
-            Write-Debug "Bodycount: $($bodycount)"
+                # search
+                $bodycount = ($dataxml -split [regex]::Escape($filterstr)).Count - 1
+                Write-Debug "Bodycount: $($bodycount)"
+            } catch { 
+                Write-Error "The GPO with GUID $($iteratorid) seems to be empty and therefore cannot be searched." 
+            }
 
         }
         
@@ -153,7 +159,8 @@ as important as a mention in the body, use '2'): "
         {
             # calc value
             $value = 0
-            if ($multimentions) { $value = $titlecount * $titleprio + $bodycount }
+            if ($multimentions) { $value = $titlecount * $prioritymult + $bodycount 
+            } elseif ($titleprio -ne 1) { $value = $titlecount * $prioritymult }
             # generate object
             $temp = [GPOstruct]::new($title, $titlecount, $bodycount, $value)
             # add object to list
@@ -163,12 +170,16 @@ as important as a mention in the body, use '2'): "
     }
 
     # sort list
-    $filteredGPOs | Sort-Object -Property Value -Descending
+    $filteredGPOs = $filteredGPOs | Sort-Object -Property Value -Descending
     # output
     for ($i=0; $i -lt $filteredGPOs.Length; $i++)
     {
-        $filteredGPOs[$i].print()
+        $filteredGPOs[$i].print($multimentions)
     }
+    
+
+    # saving output to file
+    #####################################
 
     # options for saving to file
     do {
@@ -199,7 +210,9 @@ as important as a mention in the body, use '2'): "
         do {
             Write-Host "`nPlease enter the path to the directory you wish to save the file in. "
             $path = Read-Host "If you leave the path empty, the file will be saved in your current directory: "
+            # default to current directory
             if ($path -eq "") { $path = "." }
+            # generate filepath
             $filepath = $path+"/"+$filename
 
             # make sure path is valid
@@ -209,9 +222,11 @@ as important as a mention in the body, use '2'): "
         } until ($valid)
         $valid = $false
 
-        # write $filteredGPOs into file 
-        $filteredGPOs | Out-File -FilePath $filepath 
+        # write $filteredGPOs into file silently 
+        $null = $filteredGPOs | Out-File -FilePath $filepath > $null
 
     }
     Run-CLI
 }
+
+

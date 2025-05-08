@@ -5,7 +5,7 @@
 #     - all GPOs in use (linked to domain/OU/sites)
 #     - all GPOs in active use (linked and link Enabled)
 
-. "$PSScriptRoot\CLI.ps1"
+. "$PSScriptRoot\readmyGPOs.ps1"
 
 
 # site level GPOs cause GPInheritance is a bitch and doesn't like sites

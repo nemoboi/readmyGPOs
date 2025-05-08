@@ -3,7 +3,7 @@
 #   explain all CLI options 
 #   be concise about it
 
-. "$PSScriptRoot\CLI.ps1"
+. "$PSScriptRoot\readmyGPOs.ps1"
 
 
 function Help-Me
